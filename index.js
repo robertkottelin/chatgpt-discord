@@ -7,22 +7,38 @@ const client = new Client({ intents: [
     GatewayIntentBits.MessageContent
 ]})
 
-// const { Configuration , OpenAIApi } = require('openai');
-// const configuration = new Configuration({
-//     organization: process.env.OPENAI_ORG,
-//     apiKey: process.envOPENAI_KEY,
-// })
-// const openai = new OpenAIApi(configuration);
+const { Configuration , OpenAIApi } = require('openai');
+const configuration = new Configuration({
+    organization: process.env.OPENAI_ORG,
+    apiKey: process.env.OPENAI_KEY,
+})
+const openai = new OpenAIApi(configuration);
+
+
+
 
 client.on('messageCreate', async function(message){
     try {
+        const channelId = message.channel.id;
+        const userId = message.author.id;
         if(message.author.bot) return;
-        console.log(message.content);
-        message.reply(`You said: ${message.content}`);
+
+        const gptResponse = await openai.createCompletion({
+            model: "code-davinci-002",
+            prompt: `Please answer this question:\n`,
+            temperature: 0.7,
+            max_tokens: 100,
+            conversation_id: `channel_${channelId}_user_${userId}`,
+            stop: ["ChatGPT:"],
+        })
+
+        message.reply(`${gptResponse.data.choices[0].text}`);
+        return
     } catch(err){
         console.log(err)
     }
 });
+
 
 client.login(process.env.DISCORD_TOKEN)
   .then(() => {
